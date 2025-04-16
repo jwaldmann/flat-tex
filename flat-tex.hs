@@ -38,6 +38,7 @@ data Item = Newline
           -- ^ with optional argument in [], exactly one argument in braces
           | Braced Document
           | Bracketed Document
+          | Verb Char String
           | Verbatim String -- ^ special: keep % (it is not a comment)
           | Letter { unLetter :: Char }
           | Escaped Char
@@ -54,6 +55,7 @@ emit Newline = "\n"
 emit (Comment _) = "%\n"
 emit (Command name opt arg) = "\\" ++ name
   ++ (case opt of Nothing -> "" ; Just o -> emit o ) ++ emit arg
+emit (Verb delim s) = "\\verb" <> [delim] <> s <> [delim]
 emit (Verbatim s) = "\\begin{verbatim}" ++ s ++ "\\end{verbatim}"
 emit (Braced doc) = "{" ++ emits doc ++ "}"
 emit (Bracketed doc) = "[" ++ emits doc ++ "]"
@@ -135,6 +137,10 @@ item =   do newline
      <|> do try (string "\\begin{verbatim}")
             cs <- anyChar `manyTill` try (string "\\end{verbatim}")
             return $ Verbatim cs
+     <|> do try (string "\\verb")
+            delim <- anyChar
+            cs <- anyChar `manyTill` (char delim)
+            return $ Verb delim cs
      <|> do char '\\'
             command known_commands <|> Escaped <$> anyChar
      <|> do braced
