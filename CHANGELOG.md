@@ -1,3 +1,6 @@
+2025-04-16  version 0.8.1
+	    * parse \verb|...| with any delimiter (fix #8)
+
 2019-04-16
         * add --keep-bib option (Lipics wants the bib file)
 
