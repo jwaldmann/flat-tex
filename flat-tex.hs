@@ -74,14 +74,14 @@ handles mode top (it:its) = case it of
   (Command "inputt" Nothing (Braced doc)) -> do
     fhandle mode ".tex" $ map unLetter doc
     handles mode top its
-  (Command "bibliography" Nothing _) -> do
+  (Command "bibliography" _ _) -> do
     case mode of
       Expand -> fhandle Expand ".bbl" top
       Keep -> putStr $ emit it
     handles mode top its
   (Command _ _ _) -> do -- ignore TODO, etc.
     case dropWhile isSpace its of
-      Newline : more ->do
+      Newline : more -> do
         putStr $ emit (Comment undefined)
         handles mode top more
       more -> do
@@ -137,10 +137,12 @@ item =   do newline
      <|> do try (string "\\begin{verbatim}")
             cs <- anyChar `manyTill` try (string "\\end{verbatim}")
             return $ Verbatim cs
-     <|> do try (string "\\verb")
+     <|> try (do
+            string "\\verb"
+            notFollowedBy (string "atiminput")
             delim <- anyChar
             cs <- anyChar `manyTill` (char delim)
-            return $ Verb delim cs
+            return $ Verb delim cs )
      <|> do char '\\'
             command known_commands <|> Escaped <$> anyChar
      <|> do braced
